@@ -1,7 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
+    <Version>1.0.2</Version>
+    <Authors>Yako</Authors>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Description>增添持久化队列</Description>
   </PropertyGroup>
 
   <ItemGroup>

@@ -12,10 +12,13 @@ namespace RabbitmqNet
         /// rabbitmq连接字串：amqp://guest:guest@192.168.0.252:5672/
         /// </summary>
         public string ConnectionString { private set; get; }
-        public string Exchange { get; set; }
+        public string Exchange { get; set; } = "RabbitmqNet";
+        public string ProvidedName { get; set; }
         public IConnection conn { get; set; }
-        public IModel channel { get; set; }
-        public EventingBasicConsumer Consumer { get; set; }
+        /// <summary>
+        /// 无消费者时消息的重试时间(默认1秒)
+        /// </summary>
+        public TimeSpan NoConsumerMessageRetryInterval { set; get; }
         public bool IsConnected
         {
             get
@@ -24,20 +27,14 @@ namespace RabbitmqNet
             }
         }
 
-        public Connection(string connectionString, string exchange)
+        public Connection(string connectionString, string providedName)
         {
             ConnectionString = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
-            Exchange = exchange ?? throw new ArgumentNullException(nameof(exchange));
-            ConnectionFactory factory = new ConnectionFactory();
-            factory.Uri = new Uri(connectionString);
-            conn = factory.CreateConnection();
-            channel = CreateModel();
+            ProvidedName = providedName ?? throw new ArgumentNullException(nameof(providedName));
+            TryConnect();
+            NoConsumerMessageRetryInterval = TimeSpan.FromSeconds(1);
         }
-        public void Close()
-        {
-            channel.Close();
-            conn.Close();
-        }
+
         public IModel CreateModel()
         {
             if (!IsConnected)
@@ -45,7 +42,8 @@ namespace RabbitmqNet
                 throw new InvalidOperationException("No RabbitMQ connections are available to perform this action");
             }
 
-            return conn.CreateModel();
+            var channel = conn.CreateModel();
+            return channel;
         }
         public void TryConnect()
         {
@@ -53,8 +51,7 @@ namespace RabbitmqNet
             {
                 ConnectionFactory factory = new ConnectionFactory();
                 factory.Uri = new Uri(ConnectionString);
-                conn = factory.CreateConnection();
-                channel = CreateModel();
+                conn = factory.CreateConnection(clientProvidedName: ProvidedName);
             }
         }
     }
